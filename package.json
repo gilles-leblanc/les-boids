@@ -1,0 +1,20 @@
+{
+  "name": "les-boids",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "we are live!",
+    "tsc": "tsc",
+    "tsc:w": "tsc -w",
+    "lite": "lite-server",
+    "start": "concurrently \"npm run tsc:w\" \"npm run lite\" "
+  },
+  "author": "Gilles Leblanc",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^5.0.0",
+    "lite-server": "^2.5.4",
+    "typescript": "^3.6.4"
+  }
+}
