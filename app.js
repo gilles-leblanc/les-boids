@@ -16,29 +16,26 @@ var Boid = (function () {
     function Boid(x, y, angle) {
         this.speed = 1;
         this.velocity = 10;
-        this.x = x;
-        this.y = y;
+        this.point = new Point(x, y);
         this.angle = angle;
     }
     return Boid;
 }());
 function drawBoid(boid, context) {
     var sideLength = 20;
-    var p1 = { x: boid.x, y: boid.y };
-    var p2 = { x: boid.x + sideLength, y: boid.y };
-    var p3 = { x: boid.x + sideLength, y: boid.y + sideLength };
-    var p4 = { x: boid.x, y: boid.y + sideLength };
-    var p1p = new Point(p1.x, p1.y).translate(boid.x, boid.y).rotate(boid.angle).translate(-boid.x, -boid.y);
-    var p2p = new Point(p2.x, p2.y).translate(boid.x, boid.y).rotate(boid.angle).translate(-boid.x, -boid.y);
-    var p3p = new Point(p3.x, p3.y).translate(boid.x, boid.y).rotate(boid.angle).translate(-boid.x, -boid.y);
-    var p4p = new Point(p4.x, p4.y).translate(boid.x, boid.y).rotate(boid.angle).translate(-boid.x, -boid.y);
+    var p1 = { x: boid.point.x, y: boid.point.y };
+    var p2 = { x: boid.point.x + sideLength, y: boid.point.y };
+    var p3 = { x: boid.point.x + sideLength, y: boid.point.y + sideLength };
+    var p1p = new Point(p1.x, p1.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
+    var p2p = new Point(p2.x, p2.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
+    var p3p = new Point(p3.x, p3.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
     context.moveTo(p1p.x, p1p.y);
-    context.lineTo(p1p.x, p1p.y);
     context.lineTo(p2p.x, p2p.y);
     context.lineTo(p3p.x, p3p.y);
-    context.lineTo(p4p.x, p4p.y);
     context.lineTo(p1p.x, p1p.y);
     context.lineWidth = 1;
+    context.fillStyle = '#8ED6FF';
+    context.fill();
     context.strokeStyle = '#666666';
     context.stroke();
 }

@@ -19,15 +19,13 @@ class Point {
 }
 
 class Boid {
-  x: number;
-  y: number;
+  point: Point;
   angle: number;
   speed = 1;
   velocity = 10;
 
   constructor(x: number, y: number, angle: number) {
-    this.x = x;
-    this.y = y;
+    this.point = new Point(x, y);
     this.angle = angle;
   }
 }
@@ -35,24 +33,25 @@ class Boid {
 function drawBoid(boid: Boid, context: CanvasRenderingContext2D) {
   const sideLength = 20;
 
-  const p1 = { x: boid.x, y: boid.y };
-  const p2 = { x: boid.x + sideLength, y: boid.y };
-  const p3 = { x: boid.x + sideLength, y: boid.y + sideLength };
-  const p4 = { x: boid.x, y: boid.y + sideLength };
+  // get points from triangular boid
+  const p1 = { x: boid.point.x, y: boid.point.y };
+  const p2 = { x: boid.point.x + sideLength, y: boid.point.y };
+  const p3 = { x: boid.point.x + sideLength, y: boid.point.y + sideLength };
   
-  const p1p = new Point(p1.x, p1.y).translate(boid.x, boid.y).rotate(boid.angle).translate(-boid.x, -boid.y);
-  const p2p = new Point(p2.x, p2.y).translate(boid.x, boid.y).rotate(boid.angle).translate(-boid.x, -boid.y);
-  const p3p = new Point(p3.x, p3.y).translate(boid.x, boid.y).rotate(boid.angle).translate(-boid.x, -boid.y);
-  const p4p = new Point(p4.x, p4.y).translate(boid.x, boid.y).rotate(boid.angle).translate(-boid.x, -boid.y);
+  // rotate points for angle of boid
+  const p1p = new Point(p1.x, p1.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
+  const p2p = new Point(p2.x, p2.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
+  const p3p = new Point(p3.x, p3.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
 
+  // draw boid
   context.moveTo(p1p.x, p1p.y);
-  context.lineTo(p1p.x, p1p.y);
   context.lineTo(p2p.x, p2p.y);
   context.lineTo(p3p.x, p3p.y);
-  context.lineTo(p4p.x, p4p.y);
   context.lineTo(p1p.x, p1p.y);
 
   context.lineWidth = 1;
+  context.fillStyle = '#8ED6FF';
+  context.fill();
   context.strokeStyle = '#666666';
   context.stroke();
 }
