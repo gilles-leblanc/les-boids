@@ -7,15 +7,6 @@ class Point {
     this.x = x;
     this.y = y;
   }
-
-  translate(tx: number, ty: number): Point {
-    return new Point(this.x - tx, this.y - ty);
-  }
-
-  rotate(angle: number): Point {
-    return new Point(this.x * Math.cos(angle) - this.y * Math.sin(angle),
-                     this.y * Math.cos(angle) + this.x * Math.sin(angle));
-  }
 }
 
 class Boid {
@@ -37,23 +28,26 @@ function drawBoid(boid: Boid, context: CanvasRenderingContext2D) {
   const p1 = { x: boid.point.x, y: boid.point.y };
   const p2 = { x: boid.point.x + sideLength, y: boid.point.y };
   const p3 = { x: boid.point.x + sideLength, y: boid.point.y + sideLength };
+   
+  // apply rotation to correct angle
+  context.translate(boid.point.x, boid.point.y);
+  context.rotate(boid.angle);
+  context.translate(-boid.point.x, -boid.point.y);
   
-  // rotate points for angle of boid
-  const p1p = new Point(p1.x, p1.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
-  const p2p = new Point(p2.x, p2.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
-  const p3p = new Point(p3.x, p3.y).translate(boid.point.x, boid.point.y).rotate(boid.angle).translate(-boid.point.x, -boid.point.y);
-
   // draw boid
-  context.moveTo(p1p.x, p1p.y);
-  context.lineTo(p2p.x, p2p.y);
-  context.lineTo(p3p.x, p3p.y);
-  context.lineTo(p1p.x, p1p.y);
-
+  context.moveTo(p1.x, p1.y);
+  context.lineTo(p2.x, p2.y);
+  context.lineTo(p3.x, p3.y);
+  context.lineTo(p1.x, p1.y);  
+  
   context.lineWidth = 1;
   context.fillStyle = '#8ED6FF';
   context.fill();
   context.strokeStyle = '#666666';
   context.stroke();
+  
+  // reset transform matrix
+  context.setTransform(1, 0, 0, 1, 0, 0)
 }
 
 function start() {
