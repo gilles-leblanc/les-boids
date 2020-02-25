@@ -13,8 +13,8 @@
   "author": "Gilles Leblanc",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^5.0.0",
+    "concurrently": "^5.1.0",
     "lite-server": "^2.5.4",
-    "typescript": "^3.6.4"
+    "typescript": "^3.8.2"
   }
 }
