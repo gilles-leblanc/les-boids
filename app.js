@@ -12,9 +12,19 @@ var Point = (function () {
 var Boid = (function () {
     function Boid(x, y, angle) {
         this.speed = 1.5;
+        this.neighborhood = 45;
+        this.sideLength = 20;
         this.point = new Point(x, y);
         this.angle = angle;
     }
+    Boid.prototype.align = function (boids) {
+        var _this = this;
+        var neighbors = boids.filter(function (b) { return b.inNeighborhood(_this); });
+        var avg = neighbors.reduce(function (acc, cur) { return acc + cur.angle; }, 0) / neighbors.length;
+    };
+    Boid.prototype.inNeighborhood = function (of) {
+        return false;
+    };
     Boid.prototype.move = function () {
         this.point.x += this.speed * Math.cos(this.angle - (Math.PI / 4));
         this.point.y += this.speed * Math.sin(this.angle - (Math.PI / 4));
@@ -46,10 +56,9 @@ var BoidWorld = (function () {
         if (!this.context) {
             return;
         }
-        var sideLength = 20;
         var p1 = { x: boid.point.x, y: boid.point.y };
-        var p2 = { x: boid.point.x + sideLength, y: boid.point.y };
-        var p3 = { x: boid.point.x + sideLength, y: boid.point.y + sideLength };
+        var p2 = { x: boid.point.x + boid.sideLength, y: boid.point.y };
+        var p3 = { x: boid.point.x + boid.sideLength, y: boid.point.y + boid.sideLength };
         this.context.translate(boid.point.x, boid.point.y);
         this.context.rotate(boid.angle);
         this.context.translate(-boid.point.x, -boid.point.y);
@@ -64,6 +73,9 @@ var BoidWorld = (function () {
         this.context.strokeStyle = '#666666';
         this.context.stroke();
         this.context.closePath();
+        this.context.beginPath();
+        this.context.arc(boid.point.x + boid.sideLength, boid.point.y, boid.neighborhood, 0, 2 * Math.PI);
+        this.context.stroke();
         this.context.setTransform(1, 0, 0, 1, 0, 0);
     };
     BoidWorld.prototype.updateBoids = function (timestamp) {
@@ -83,8 +95,8 @@ var BoidWorld = (function () {
     BoidWorld.prototype.create = function () {
         var _this = this;
         this.clear();
-        this.boids.push(new Boid(100, 100, Math.PI / 4));
-        this.boids.push(new Boid(20, 500, 0));
+        this.boids.push(new Boid(80, 100, Math.PI / 4));
+        this.boids.push(new Boid(20, 200, 0));
         this.boids.push(new Boid(304, 450, Math.PI / 2));
         this.boids.forEach(function (b) { return _this.drawBoid(b); });
         requestAnimationFrame(this.updateBoids.bind(this));

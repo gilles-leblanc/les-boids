@@ -17,10 +17,26 @@ class Boid {
   point: Point;
   angle: number;
   speed = 1.5;
+  neighborhood = 45;
+  sideLength = 20;
 
   constructor(x: number, y: number, angle: number) {
     this.point = new Point(x, y);
     this.angle = angle;
+  }
+
+  align(boids: Boid[]) {
+    const neighbors = boids.filter(b => b.inNeighborhood(this));
+    const avg = neighbors.reduce((acc, cur) => acc + cur.angle, 0) / neighbors.length;
+
+    // steer towards the average gradually 
+
+  }
+
+  private inNeighborhood(of: Boid): boolean {
+    // is this.xy in of
+
+    return false;
   }
 
   move() {
@@ -34,7 +50,7 @@ class BoidWorld {
   canvasWidth = 0;
   context: CanvasRenderingContext2D | null = null;
   startStamp: number | undefined;
-  boids: Array<Boid> = [];  
+  boids: Boid[] = [];  
 
   constructor() {
     const canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
@@ -60,12 +76,10 @@ class BoidWorld {
       return;
     }
 
-    const sideLength = 20;
-  
     // get points from triangular boid
     const p1 = { x: boid.point.x, y: boid.point.y };
-    const p2 = { x: boid.point.x + sideLength, y: boid.point.y };
-    const p3 = { x: boid.point.x + sideLength, y: boid.point.y + sideLength };
+    const p2 = { x: boid.point.x + boid.sideLength, y: boid.point.y };
+    const p3 = { x: boid.point.x + boid.sideLength, y: boid.point.y + boid.sideLength };
      
     // apply rotation to correct angle
     this.context.translate(boid.point.x, boid.point.y);
@@ -86,6 +100,11 @@ class BoidWorld {
     this.context.stroke();
     this.context.closePath();
     
+    // draw neighborhood
+    this.context.beginPath();
+    this.context.arc(boid.point.x + boid.sideLength, boid.point.y, boid.neighborhood, 0, 2 * Math.PI);
+    this.context.stroke(); 
+
     // reset transform matrix
     this.context.setTransform(1, 0, 0, 1, 0, 0)
   }
@@ -110,8 +129,8 @@ class BoidWorld {
     this.clear();
 
     // create some boids
-    this.boids.push(new Boid(100, 100, Math.PI / 4));
-    this.boids.push(new Boid(20, 500, 0));
+    this.boids.push(new Boid(80, 100, Math.PI / 4));
+    this.boids.push(new Boid(20, 200, 0));
     this.boids.push(new Boid(304, 450, Math.PI / 2));
   
     // render them
