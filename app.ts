@@ -16,8 +16,7 @@ class Point {
 class Boid {
   point: Point;
   angle: number;
-  speed = 1;
-  velocity = 10;
+  speed = 1.5;
 
   constructor(x: number, y: number, angle: number) {
     this.point = new Point(x, y);
@@ -25,7 +24,8 @@ class Boid {
   }
 
   move() {
-    this.point = this.point.translate(this.speed, this.speed);
+    this.point.x += this.speed * Math.cos(this.angle - (Math.PI / 4));
+    this.point.y += this.speed * Math.sin(this.angle - (Math.PI / 4));
   }
 }
 

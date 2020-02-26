@@ -11,13 +11,13 @@ var Point = (function () {
 }());
 var Boid = (function () {
     function Boid(x, y, angle) {
-        this.speed = 1;
-        this.velocity = 10;
+        this.speed = 1.5;
         this.point = new Point(x, y);
         this.angle = angle;
     }
     Boid.prototype.move = function () {
-        this.point = this.point.translate(this.speed, this.speed);
+        this.point.x += this.speed * Math.cos(this.angle - (Math.PI / 4));
+        this.point.y += this.speed * Math.sin(this.angle - (Math.PI / 4));
     };
     return Boid;
 }());
