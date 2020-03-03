@@ -17,7 +17,7 @@ class Boid {
   point: Point;
   angle: number;
   speed = 1.5;
-  neighborhood = 45;
+  neighborhood = 100;
   sideLength = 20;
 
   constructor(x: number, y: number, angle: number) {
@@ -26,17 +26,26 @@ class Boid {
   }
 
   align(boids: Boid[]) {
-    const neighbors = boids.filter(b => b.inNeighborhood(this));
+    const neighbors = boids.filter(b => this.point.x !== b.point.x && 
+                                        this.point.y !== b.point.y && 
+                                        b.inNeighborhood(this));
+
+    if (neighbors.length === 0) {
+      return 0;
+    }
+
     const avg = neighbors.reduce((acc, cur) => acc + cur.angle, 0) / neighbors.length;
 
     // steer towards the average gradually 
-
+    this.angle += (avg - this.angle) * 0.1;
   }
 
-  private inNeighborhood(of: Boid): boolean {
+  private inNeighborhood(otherBoid: Boid): boolean {
     // is this.xy in of
-
-    return false;
+    const distance = Math.sqrt(Math.pow((otherBoid.point.x - this.point.x + this.sideLength), 2) +
+                               Math.pow((otherBoid.point.y - this.point.y), 2));
+    
+    return distance <= this.neighborhood;
   }
 
   move() {
@@ -116,6 +125,7 @@ class BoidWorld {
   
     if (this.context) {
       this.clear();
+      this.boids.forEach(b => b.align(this.boids));
       this.boids.forEach(b => b.move());
       this.boids.forEach(b => this.drawBoid(b));
     }

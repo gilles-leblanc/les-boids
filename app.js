@@ -12,18 +12,26 @@ var Point = (function () {
 var Boid = (function () {
     function Boid(x, y, angle) {
         this.speed = 1.5;
-        this.neighborhood = 45;
+        this.neighborhood = 100;
         this.sideLength = 20;
         this.point = new Point(x, y);
         this.angle = angle;
     }
     Boid.prototype.align = function (boids) {
         var _this = this;
-        var neighbors = boids.filter(function (b) { return b.inNeighborhood(_this); });
+        var neighbors = boids.filter(function (b) { return _this.point.x !== b.point.x &&
+            _this.point.y !== b.point.y &&
+            b.inNeighborhood(_this); });
+        if (neighbors.length === 0) {
+            return 0;
+        }
         var avg = neighbors.reduce(function (acc, cur) { return acc + cur.angle; }, 0) / neighbors.length;
+        this.angle += (avg - this.angle) * 0.1;
     };
-    Boid.prototype.inNeighborhood = function (of) {
-        return false;
+    Boid.prototype.inNeighborhood = function (otherBoid) {
+        var distance = Math.sqrt(Math.pow((otherBoid.point.x - this.point.x + this.sideLength), 2) +
+            Math.pow((otherBoid.point.y - this.point.y), 2));
+        return distance <= this.neighborhood;
     };
     Boid.prototype.move = function () {
         this.point.x += this.speed * Math.cos(this.angle - (Math.PI / 4));
@@ -85,6 +93,7 @@ var BoidWorld = (function () {
         }
         if (this.context) {
             this.clear();
+            this.boids.forEach(function (b) { return b.align(_this.boids); });
             this.boids.forEach(function (b) { return b.move(); });
             this.boids.forEach(function (b) { return _this.drawBoid(b); });
         }
