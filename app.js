@@ -17,16 +17,49 @@ var Boid = (function () {
         this.point = new Point(x, y);
         this.angle = angle;
     }
-    Boid.prototype.align = function (boids) {
-        var _this = this;
-        var neighbors = boids.filter(function (b) { return _this.point.x !== b.point.x &&
-            _this.point.y !== b.point.y &&
-            b.inNeighborhood(_this); });
+    Boid.prototype.steer = function (boids) {
+        this.cohesion(boids);
+        this.align(boids);
+        this.avoid(boids);
+    };
+    Boid.prototype.cohesion = function (boids) {
+        var neighbors = this.getNeighbors(boids);
         if (neighbors.length === 0) {
-            return 0;
+            return;
+        }
+        var avgX = neighbors.reduce(function (acc, cur) { return acc + cur.point.x; }, 0) / neighbors.length;
+        var avgY = neighbors.reduce(function (acc, cur) { return acc + cur.point.y; }, 0) / neighbors.length;
+        var z = this.neighborhood / 2;
+        var distance = Math.sqrt(Math.pow(this.point.x - avgX, 2) + Math.pow(this.point.y - avgY, 2));
+        if (distance > z) {
+        }
+    };
+    Boid.prototype.avoid = function (boids) {
+        var neighbors = this.getNeighbors(boids);
+        if (neighbors.length === 0) {
+            return;
+        }
+        var avgX = neighbors.reduce(function (acc, cur) { return acc + cur.point.x; }, 0) / neighbors.length;
+        var avgY = neighbors.reduce(function (acc, cur) { return acc + cur.point.y; }, 0) / neighbors.length;
+        var z = this.neighborhood / 3;
+        var distance = Math.sqrt(Math.pow(this.point.x - avgX, 2) + Math.pow(this.point.y - avgY, 2));
+        if (distance <= z) {
+            this.angle += Math.PI / 6;
+        }
+    };
+    Boid.prototype.align = function (boids) {
+        var neighbors = this.getNeighbors(boids);
+        if (neighbors.length === 0) {
+            return;
         }
         var avg = neighbors.reduce(function (acc, cur) { return acc + cur.angle; }, 0) / neighbors.length;
         this.angle += (avg - this.angle) * 0.1;
+    };
+    Boid.prototype.getNeighbors = function (boids) {
+        var _this = this;
+        return boids.filter(function (b) { return _this.point.x !== b.point.x &&
+            _this.point.y !== b.point.y &&
+            b.inNeighborhood(_this); });
     };
     Boid.prototype.inNeighborhood = function (otherBoid) {
         var distance = Math.sqrt(Math.pow((otherBoid.point.x - this.point.x + this.sideLength), 2) +
@@ -93,7 +126,7 @@ var BoidWorld = (function () {
         }
         if (this.context) {
             this.clear();
-            this.boids.forEach(function (b) { return b.align(_this.boids); });
+            this.boids.forEach(function (b) { return b.steer(_this.boids); });
             this.boids.forEach(function (b) { return b.move(); });
             this.boids.forEach(function (b) { return _this.drawBoid(b); });
         }

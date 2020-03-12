@@ -25,19 +25,78 @@ class Boid {
     this.angle = angle;
   }
 
-  align(boids: Boid[]) {
-    const neighbors = boids.filter(b => this.point.x !== b.point.x && 
-                                        this.point.y !== b.point.y && 
-                                        b.inNeighborhood(this));
+  steer(boids: Boid[]) {
+    this.cohesion(boids);
+    this.align(boids);
+    this.avoid(boids);
+  }
+
+  /**
+   * Steer to move toward the average position of local flockmates.
+   * @param boids All the boids in the scene.
+   */
+  private cohesion(boids: Boid[]) {
+    const neighbors = this.getNeighbors(boids);
+    
+    if (neighbors.length === 0) {
+      return;
+    }
+    
+    const avgX = neighbors.reduce((acc, cur) => acc + cur.point.x, 0) / neighbors.length;
+    const avgY = neighbors.reduce((acc, cur) => acc + cur.point.y, 0) / neighbors.length;
+    
+    // if actual position is farther than Z from avg, steer towards avg
+    const z = this.neighborhood / 2;
+    
+    const distance = Math.sqrt(Math.pow(this.point.x - avgX, 2) + Math.pow(this.point.y - avgY, 2));
+    if (distance > z) {
+      
+    }
+  }
+  
+  /**
+   * Steer to move toward the average position of local flockmates.
+   * @param boids All the boids in the scene.
+   */
+  private avoid(boids: Boid[]) {
+    const neighbors = this.getNeighbors(boids);
+    
+    if (neighbors.length === 0) {
+      return;
+    }
+    
+    const avgX = neighbors.reduce((acc, cur) => acc + cur.point.x, 0) / neighbors.length;
+    const avgY = neighbors.reduce((acc, cur) => acc + cur.point.y, 0) / neighbors.length;
+    
+    // if actual position is close than Z from avg, steer towards avg
+    const z = this.neighborhood / 3;
+    
+    const distance = Math.sqrt(Math.pow(this.point.x - avgX, 2) + Math.pow(this.point.y - avgY, 2));
+    if (distance <= z) {
+      this.angle += Math.PI / 6;
+    }
+  }
+
+  /**
+   * Steer towards the average heading of local flockmates.
+   * @param boids All the boids in the scene.
+   */
+  private align(boids: Boid[]) {
+    const neighbors = this.getNeighbors(boids);
 
     if (neighbors.length === 0) {
-      return 0;
+      return;
     }
 
     const avg = neighbors.reduce((acc, cur) => acc + cur.angle, 0) / neighbors.length;
 
-    // steer towards the average gradually 
     this.angle += (avg - this.angle) * 0.1;
+  }
+
+  private getNeighbors(boids: Boid[]): Boid[] {
+    return boids.filter(b => this.point.x !== b.point.x && 
+                             this.point.y !== b.point.y && 
+                             b.inNeighborhood(this));
   }
 
   private inNeighborhood(otherBoid: Boid): boolean {
@@ -125,7 +184,7 @@ class BoidWorld {
   
     if (this.context) {
       this.clear();
-      this.boids.forEach(b => b.align(this.boids));
+      this.boids.forEach(b => b.steer(this.boids));
       this.boids.forEach(b => b.move());
       this.boids.forEach(b => this.drawBoid(b));
     }
