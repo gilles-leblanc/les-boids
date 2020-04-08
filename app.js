@@ -1,21 +1,25 @@
 "use strict";
-var Point = (function () {
-    function Point(x, y) {
+var Vector = (function () {
+    function Vector(x, y) {
         this.x = x;
         this.y = y;
     }
-    Point.prototype.translate = function (tx, ty) {
-        return new Point(this.x - tx, this.y - ty);
+    Vector.prototype.add = function (other) {
+        this.x += other.x;
+        this.y += other.y;
     };
-    return Point;
+    Vector.prototype.getAngle = function () {
+        var zdVector = { x: 0, y: 1 };
+        return Math.atan2(this.x, -this.y) - Math.atan2(zdVector.x, zdVector.y);
+    };
+    return Vector;
 }());
 var Boid = (function () {
-    function Boid(x, y, angle) {
-        this.speed = 1.5;
+    function Boid(location, velocity) {
         this.neighborhood = 100;
         this.sideLength = 20;
-        this.point = new Point(x, y);
-        this.angle = angle;
+        this.location = location;
+        this.velocity = velocity;
     }
     Boid.prototype.steer = function (boids) {
         this.cohesion(boids);
@@ -27,10 +31,10 @@ var Boid = (function () {
         if (neighbors.length === 0) {
             return;
         }
-        var avgX = neighbors.reduce(function (acc, cur) { return acc + cur.point.x; }, 0) / neighbors.length;
-        var avgY = neighbors.reduce(function (acc, cur) { return acc + cur.point.y; }, 0) / neighbors.length;
+        var avgX = neighbors.reduce(function (acc, cur) { return acc + cur.location.x; }, 0) / neighbors.length;
+        var avgY = neighbors.reduce(function (acc, cur) { return acc + cur.location.y; }, 0) / neighbors.length;
         var z = this.neighborhood / 2;
-        var distance = Math.sqrt(Math.pow(this.point.x - avgX, 2) + Math.pow(this.point.y - avgY, 2));
+        var distance = Math.sqrt(Math.pow(this.location.x - avgX, 2) + Math.pow(this.location.y - avgY, 2));
         if (distance > z) {
         }
     };
@@ -39,12 +43,11 @@ var Boid = (function () {
         if (neighbors.length === 0) {
             return;
         }
-        var avgX = neighbors.reduce(function (acc, cur) { return acc + cur.point.x; }, 0) / neighbors.length;
-        var avgY = neighbors.reduce(function (acc, cur) { return acc + cur.point.y; }, 0) / neighbors.length;
+        var avgX = neighbors.reduce(function (acc, cur) { return acc + cur.location.x; }, 0) / neighbors.length;
+        var avgY = neighbors.reduce(function (acc, cur) { return acc + cur.location.y; }, 0) / neighbors.length;
         var z = this.neighborhood / 3;
-        var distance = Math.sqrt(Math.pow(this.point.x - avgX, 2) + Math.pow(this.point.y - avgY, 2));
+        var distance = Math.sqrt(Math.pow(this.location.x - avgX, 2) + Math.pow(this.location.y - avgY, 2));
         if (distance <= z) {
-            this.angle += Math.PI / 6;
         }
     };
     Boid.prototype.align = function (boids) {
@@ -52,23 +55,20 @@ var Boid = (function () {
         if (neighbors.length === 0) {
             return;
         }
-        var avg = neighbors.reduce(function (acc, cur) { return acc + cur.angle; }, 0) / neighbors.length;
-        this.angle += (avg - this.angle) * 0.1;
     };
     Boid.prototype.getNeighbors = function (boids) {
         var _this = this;
-        return boids.filter(function (b) { return _this.point.x !== b.point.x &&
-            _this.point.y !== b.point.y &&
+        return boids.filter(function (b) { return _this.location.x !== b.location.x &&
+            _this.location.y !== b.location.y &&
             b.inNeighborhood(_this); });
     };
     Boid.prototype.inNeighborhood = function (otherBoid) {
-        var distance = Math.sqrt(Math.pow((otherBoid.point.x - this.point.x + this.sideLength), 2) +
-            Math.pow((otherBoid.point.y - this.point.y), 2));
+        var distance = Math.sqrt(Math.pow((otherBoid.location.x - this.location.x + this.sideLength), 2) +
+            Math.pow((otherBoid.location.y - this.location.y), 2));
         return distance <= this.neighborhood;
     };
     Boid.prototype.move = function () {
-        this.point.x += this.speed * Math.cos(this.angle - (Math.PI / 4));
-        this.point.y += this.speed * Math.sin(this.angle - (Math.PI / 4));
+        this.location.add(this.velocity);
     };
     return Boid;
 }());
@@ -97,12 +97,12 @@ var BoidWorld = (function () {
         if (!this.context) {
             return;
         }
-        var p1 = { x: boid.point.x, y: boid.point.y };
-        var p2 = { x: boid.point.x + boid.sideLength, y: boid.point.y };
-        var p3 = { x: boid.point.x + boid.sideLength, y: boid.point.y + boid.sideLength };
-        this.context.translate(boid.point.x, boid.point.y);
-        this.context.rotate(boid.angle);
-        this.context.translate(-boid.point.x, -boid.point.y);
+        var p1 = { x: boid.location.x + boid.sideLength / 2, y: boid.location.y };
+        var p2 = { x: boid.location.x + boid.sideLength, y: boid.location.y + boid.sideLength };
+        var p3 = { x: boid.location.x, y: boid.location.y + boid.sideLength };
+        this.context.translate(boid.location.x, boid.location.y);
+        this.context.rotate(boid.velocity.getAngle());
+        this.context.translate(-boid.location.x, -boid.location.y);
         this.context.beginPath();
         this.context.moveTo(p1.x, p1.y);
         this.context.lineTo(p2.x, p2.y);
@@ -115,7 +115,7 @@ var BoidWorld = (function () {
         this.context.stroke();
         this.context.closePath();
         this.context.beginPath();
-        this.context.arc(boid.point.x + boid.sideLength, boid.point.y, boid.neighborhood, 0, 2 * Math.PI);
+        this.context.arc(boid.location.x + boid.sideLength / 2, boid.location.y, boid.neighborhood, 0, 2 * Math.PI);
         this.context.stroke();
         this.context.setTransform(1, 0, 0, 1, 0, 0);
     };
@@ -126,7 +126,6 @@ var BoidWorld = (function () {
         }
         if (this.context) {
             this.clear();
-            this.boids.forEach(function (b) { return b.steer(_this.boids); });
             this.boids.forEach(function (b) { return b.move(); });
             this.boids.forEach(function (b) { return _this.drawBoid(b); });
         }
@@ -137,9 +136,9 @@ var BoidWorld = (function () {
     BoidWorld.prototype.create = function () {
         var _this = this;
         this.clear();
-        this.boids.push(new Boid(80, 100, Math.PI / 4));
-        this.boids.push(new Boid(20, 200, 0));
-        this.boids.push(new Boid(304, 450, Math.PI / 2));
+        this.boids.push(new Boid(new Vector(80, 100), new Vector(1, 0)));
+        this.boids.push(new Boid(new Vector(20, 200), new Vector(1, 0)));
+        this.boids.push(new Boid(new Vector(304, 450), new Vector(1, 0)));
         this.boids.forEach(function (b) { return _this.drawBoid(b); });
         requestAnimationFrame(this.updateBoids.bind(this));
     };

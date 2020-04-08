@@ -1,5 +1,5 @@
 
-class Point {
+class Vector {
   x: number;
   y: number;
 
@@ -8,21 +8,27 @@ class Point {
     this.y = y;
   }
 
-  translate(tx: number, ty: number): Point {
-    return new Point(this.x - tx, this.y - ty);
+  add(other: Vector) {
+    this.x += other.x;
+    this.y += other.y;
+  }
+
+  getAngle(): number {
+    const zdVector = { x: 0, y: 1 };
+    return Math.atan2(this.x, -this.y) - Math.atan2(zdVector.x, zdVector.y);
   }
 }
 
 class Boid {
-  point: Point;
-  angle: number;
-  speed = 1.5;
+  location: Vector;
+  velocity: Vector;
+
   neighborhood = 100;
   sideLength = 20;
 
-  constructor(x: number, y: number, angle: number) {
-    this.point = new Point(x, y);
-    this.angle = angle;
+  constructor(location: Vector, velocity: Vector) {
+    this.location = location;
+    this.velocity = velocity;
   }
 
   steer(boids: Boid[]) {
@@ -42,13 +48,13 @@ class Boid {
       return;
     }
     
-    const avgX = neighbors.reduce((acc, cur) => acc + cur.point.x, 0) / neighbors.length;
-    const avgY = neighbors.reduce((acc, cur) => acc + cur.point.y, 0) / neighbors.length;
+    const avgX = neighbors.reduce((acc, cur) => acc + cur.location.x, 0) / neighbors.length;
+    const avgY = neighbors.reduce((acc, cur) => acc + cur.location.y, 0) / neighbors.length;
     
     // if actual position is farther than Z from avg, steer towards avg
     const z = this.neighborhood / 2;
     
-    const distance = Math.sqrt(Math.pow(this.point.x - avgX, 2) + Math.pow(this.point.y - avgY, 2));
+    const distance = Math.sqrt(Math.pow(this.location.x - avgX, 2) + Math.pow(this.location.y - avgY, 2));
     if (distance > z) {
       
     }
@@ -65,15 +71,15 @@ class Boid {
       return;
     }
     
-    const avgX = neighbors.reduce((acc, cur) => acc + cur.point.x, 0) / neighbors.length;
-    const avgY = neighbors.reduce((acc, cur) => acc + cur.point.y, 0) / neighbors.length;
+    const avgX = neighbors.reduce((acc, cur) => acc + cur.location.x, 0) / neighbors.length;
+    const avgY = neighbors.reduce((acc, cur) => acc + cur.location.y, 0) / neighbors.length;
     
     // if actual position is close than Z from avg, steer towards avg
     const z = this.neighborhood / 3;
     
-    const distance = Math.sqrt(Math.pow(this.point.x - avgX, 2) + Math.pow(this.point.y - avgY, 2));
+    const distance = Math.sqrt(Math.pow(this.location.x - avgX, 2) + Math.pow(this.location.y - avgY, 2));
     if (distance <= z) {
-      this.angle += Math.PI / 6;
+      // this.angle += Math.PI / 6;
     }
   }
 
@@ -88,28 +94,29 @@ class Boid {
       return;
     }
 
-    const avg = neighbors.reduce((acc, cur) => acc + cur.angle, 0) / neighbors.length;
+    // const avg = neighbors.reduce((acc, cur) => acc + cur.angle, 0) / neighbors.length;
 
-    this.angle += (avg - this.angle) * 0.1;
+    // this.angle += (avg - this.angle) * 0.1;
   }
 
   private getNeighbors(boids: Boid[]): Boid[] {
-    return boids.filter(b => this.point.x !== b.point.x && 
-                             this.point.y !== b.point.y && 
+    return boids.filter(b => this.location.x !== b.location.x && 
+                             this.location.y !== b.location.y && 
                              b.inNeighborhood(this));
   }
 
   private inNeighborhood(otherBoid: Boid): boolean {
     // is this.xy in of
-    const distance = Math.sqrt(Math.pow((otherBoid.point.x - this.point.x + this.sideLength), 2) +
-                               Math.pow((otherBoid.point.y - this.point.y), 2));
+    const distance = Math.sqrt(Math.pow((otherBoid.location.x - this.location.x + this.sideLength), 2) +
+                               Math.pow((otherBoid.location.y - this.location.y), 2));
     
     return distance <= this.neighborhood;
   }
 
   move() {
-    this.point.x += this.speed * Math.cos(this.angle - (Math.PI / 4));
-    this.point.y += this.speed * Math.sin(this.angle - (Math.PI / 4));
+    this.location.add(this.velocity);
+    // this.location.x += this.speed * Math.cos(this.angle - (Math.PI / 4));
+    // this.location.y += this.speed * Math.sin(this.angle - (Math.PI / 4));
   }
 }
 
@@ -145,14 +152,14 @@ class BoidWorld {
     }
 
     // get points from triangular boid
-    const p1 = { x: boid.point.x, y: boid.point.y };
-    const p2 = { x: boid.point.x + boid.sideLength, y: boid.point.y };
-    const p3 = { x: boid.point.x + boid.sideLength, y: boid.point.y + boid.sideLength };
+    const p1 = { x: boid.location.x + boid.sideLength / 2, y: boid.location.y };
+    const p2 = { x: boid.location.x + boid.sideLength, y: boid.location.y + boid.sideLength };
+    const p3 = { x: boid.location.x, y: boid.location.y + boid.sideLength };
      
     // apply rotation to correct angle
-    this.context.translate(boid.point.x, boid.point.y);
-    this.context.rotate(boid.angle);
-    this.context.translate(-boid.point.x, -boid.point.y);
+    this.context.translate(boid.location.x, boid.location.y);
+    this.context.rotate(boid.velocity.getAngle());
+    this.context.translate(-boid.location.x, -boid.location.y);
     
     // draw boid
     this.context.beginPath();
@@ -170,7 +177,7 @@ class BoidWorld {
     
     // draw neighborhood
     this.context.beginPath();
-    this.context.arc(boid.point.x + boid.sideLength, boid.point.y, boid.neighborhood, 0, 2 * Math.PI);
+    this.context.arc(boid.location.x + boid.sideLength / 2, boid.location.y, boid.neighborhood, 0, 2 * Math.PI);
     this.context.stroke(); 
 
     // reset transform matrix
@@ -184,7 +191,7 @@ class BoidWorld {
   
     if (this.context) {
       this.clear();
-      this.boids.forEach(b => b.steer(this.boids));
+      // this.boids.forEach(b => b.steer(this.boids));
       this.boids.forEach(b => b.move());
       this.boids.forEach(b => this.drawBoid(b));
     }
@@ -198,9 +205,9 @@ class BoidWorld {
     this.clear();
 
     // create some boids
-    this.boids.push(new Boid(80, 100, Math.PI / 4));
-    this.boids.push(new Boid(20, 200, 0));
-    this.boids.push(new Boid(304, 450, Math.PI / 2));
+    this.boids.push(new Boid(new Vector(80, 100), new Vector(1, 0)));
+    this.boids.push(new Boid(new Vector(20, 200), new Vector(1, 0)));
+    this.boids.push(new Boid(new Vector(304, 450), new Vector(1, 0)));
   
     // render them
     this.boids.forEach(b => this.drawBoid(b));
